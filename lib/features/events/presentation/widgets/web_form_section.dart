@@ -198,10 +198,10 @@ class _CreateEventFormState extends State<CreateEventForm> {
               _isCreating = false;
             });
 
-            // Navigate back to events page
+            // Navigate back to dashboard
             Navigator.of(
               context,
-            ).pushNamedAndRemoveUntil(AppRoutes.events, (route) => false);
+            ).pushNamedAndRemoveUntil(AppRoutes.dashboard, (route) => false);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
