@@ -107,7 +107,6 @@ class DashboardSection extends StatelessWidget {
         'Pickups Completed',
         'Total Events',
         'Communities',
-        'Events / Volunteer',
       ];
       final cards = keys
           .map((k) => _statCard(k, stats[k], _iconForStat(k), _colorForStat(k)))

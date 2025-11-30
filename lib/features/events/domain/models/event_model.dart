@@ -47,10 +47,9 @@ class EventModel extends Equatable {
       id: data['id'] ?? '',
       title: data['title'] ?? '',
       description: data['description'] ?? '',
-      date:
-          data['date'] != null
-              ? DateTime.parse(data['date'].toString())
-              : DateTime.now(),
+      date: data['date'] != null
+          ? DateTime.parse(data['date'].toString())
+          : DateTime.now(),
       location: data['location'] ?? '',
       organizer: data['organizer'] ?? '',
       organizerEmail: data['organizer_email'] ?? '',
@@ -58,10 +57,9 @@ class EventModel extends Equatable {
       imageUrl: data['image_url'] ?? '',
       category: data['category'] ?? '',
       createdBy: data['created_by'] ?? '',
-      createdAt:
-          data['created_at'] != null
-              ? DateTime.parse(data['created_at'].toString())
-              : DateTime.now(),
+      createdAt: data['created_at'] != null
+          ? DateTime.parse(data['created_at'].toString())
+          : DateTime.now(),
       status: data['status'] ?? 'Needs Approval',
       isRegistered: isRegistered,
       isPaid: data['is_paid'] ?? false,
@@ -69,9 +67,10 @@ class EventModel extends Equatable {
     );
   }
 
-  /// Convert to a map for Supabase insert/update
+  /// Convert to a map for Supabase operations
   Map<String, dynamic> toSupabase() {
     final map = {
+      'id': id, // Include ID for update operations
       'title': title,
       'description': description,
       'date': date.toIso8601String(),
@@ -90,6 +89,11 @@ class EventModel extends Equatable {
     if (isPaid && price != null) {
       map['price'] = price!;
     }
+
+    // Debug logging
+    print('🔍 TO SUPABASE MAP: $map');
+    print('🔍 EVENT ID IN MAP: "${map['id']}"');
+    print('🔍 EVENT ID IS EMPTY: ${map['id'].toString().isEmpty}');
 
     return map;
   }

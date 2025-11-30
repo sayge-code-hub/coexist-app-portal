@@ -1,5 +1,6 @@
 import 'package:coexist_app_portal/core/common_widgets/app_button.dart';
 import 'package:coexist_app_portal/core/theme/app_text_styles.dart';
+import 'package:coexist_app_portal/core/utils/app_router.dart';
 import 'package:coexist_app_portal/core/utils/date_formatter.dart';
 import 'package:coexist_app_portal/features/events/domain/models/event_model.dart';
 import 'package:coexist_app_portal/features/events/presentation/bloc/event_bloc.dart';
@@ -99,20 +100,47 @@ class EventDetailsInfo extends StatelessWidget {
         Text(event!.description, style: AppTextStyles.bodyMedium),
         SizedBox(height: 100),
         if (isEventAdmin(context, event!)) ...[
-          if (event!.status != 'Approved')
-            SizedBox(
-              width: 350,
-              height: 40,
-              child: AppButton(
-                text: 'Approve',
-                onPressed: () {
-                  context.read<EventBloc>().add(ApproveEvent(event: event!));
-                },
-                type: ButtonType.secondary,
-                size: ButtonSize.small,
-                icon: Icons.warning_amber_outlined,
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              if (event!.status != 'Approved')
+                Expanded(
+                  child: SizedBox(
+                    width: 350,
+                    height: 40,
+                    child: AppButton(
+                      text: 'Approve',
+                      onPressed: () {
+                        context.read<EventBloc>().add(
+                          ApproveEvent(event: event!),
+                        );
+                      },
+                      type: ButtonType.secondary,
+                      size: ButtonSize.small,
+                      icon: Icons.warning_amber_outlined,
+                    ),
+                  ),
+                ),
+              if (event!.status != 'Approved') const SizedBox(width: 8),
+              Expanded(
+                child: SizedBox(
+                  width: 350,
+                  height: 40,
+                  child: AppButton(
+                    text: 'Edit Event',
+                    onPressed: () {
+                      Navigator.of(
+                        context,
+                      ).pushNamed(AppRoutes.editEvent, arguments: event!.id);
+                    },
+                    type: ButtonType.primary,
+                    size: ButtonSize.small,
+                    icon: Icons.edit_outlined,
+                  ),
+                ),
               ),
-            ),
+            ],
+          ),
         ],
       ],
     );

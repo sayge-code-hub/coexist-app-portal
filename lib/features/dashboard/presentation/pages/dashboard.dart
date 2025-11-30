@@ -99,7 +99,6 @@ class _DashboardPageState extends State<DashboardPage> {
         'Pickups Completed': pickupsCompletedList.length,
         'Total Events': totalEvents,
         'Communities': communitiesList.length,
-        'Events / Volunteer': eventsPerVolunteer,
       };
 
       if (!mounted) return;

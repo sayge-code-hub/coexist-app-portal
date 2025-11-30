@@ -23,6 +23,7 @@ class AppRoutes {
   static const String setNewPassword = '/set-new-password';
   static const String events = '/events';
   static const String createEvent = '/create-event';
+  static const String editEvent = '/edit-event';
   static const String eventDetails = '/event-details';
   static const String wastePickup = '/waste-pickup';
   static const String editPickup = '/edit-pickup';
@@ -59,6 +60,11 @@ class AppRoutes {
     login: (context) => const LoginPage(),
     dashboard: (context) => const DashboardPage(),
     createEvent: (context) => const CreateEventForm(),
+    editEvent: (context) {
+      final args = ModalRoute.of(context)!.settings.arguments as String?;
+      final eventId = args ?? '';
+      return CreateEventForm(eventId: eventId);
+    },
     forgotPassword: (context) => ForgotPasswordPage(),
     setNewPassword: (context) => const SetNewPasswordPage(),
     emailVerification: (context) {
