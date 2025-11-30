@@ -4,12 +4,14 @@ import 'package:coexist_app_portal/features/auth/presentation/bloc/auth_event.da
 import 'package:coexist_app_portal/features/dashboard/presentation/widgets/events_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
 import '../../../../di/injection_container.dart' as di;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../auth/domain/repositories/auth_repository.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../widgets/dashboard_section.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -56,17 +58,23 @@ class _DashboardPageState extends State<DashboardPage> {
     });
 
     try {
-      // Use Supabase client from DI to fetch live counts.
-      final SupabaseClient client = di.sl<SupabaseClient>();
+      // Use service role client for dashboard stats to bypass RLS
+      final serviceRoleClient = SupabaseClient(
+        AppConstants.baseUrl,
+        AppConstants.serviceApiKey, // You'll need to add this
+      );
 
-      // Run queries in parallel
+      // Run queries in parallel with service role client
       final results = await Future.wait([
-        client.from('users').select(),
-        client.from('events').select(),
-        client.from('communities').select(),
-        client.from('waste_pickups').select().eq('status', 'Completed'),
-        client.from('tree_planting_orders').select('tree_count'),
-        client.from('event_registrations').select(),
+        serviceRoleClient.from('users').select(),
+        serviceRoleClient.from('events').select(),
+        serviceRoleClient.from('communities').select(),
+        serviceRoleClient
+            .from('waste_pickups')
+            .select()
+            .eq('status', 'Completed'),
+        serviceRoleClient.from('tree_planting_orders').select('tree_count'),
+        serviceRoleClient.from('event_registrations').select(),
       ]);
 
       final usersList = results[0] as List? ?? [];
@@ -89,13 +97,11 @@ class _DashboardPageState extends State<DashboardPage> {
 
       final totalEvents = eventsList.length;
       final totalRegistrations = registrationsList.length;
-      final eventsPerVolunteer = totalEvents == 0
-          ? 0
-          : (totalRegistrations / totalEvents).round();
+      final eventsPerVolunteer =
+          totalEvents == 0 ? 0 : (totalRegistrations / totalEvents).round();
 
       final data = <String, int>{
         'Total Users': usersList.length,
-        'Trees Planted': treesPlanted,
         'Pickups Completed': pickupsCompletedList.length,
         'Total Events': totalEvents,
         'Communities': communitiesList.length,

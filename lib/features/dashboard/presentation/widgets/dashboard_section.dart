@@ -103,7 +103,6 @@ class DashboardSection extends StatelessWidget {
     } else {
       final keys = [
         'Total Users',
-        'Trees Planted',
         'Pickups Completed',
         'Total Events',
         'Communities',

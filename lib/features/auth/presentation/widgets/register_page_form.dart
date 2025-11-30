@@ -129,7 +129,56 @@ class _RegisterPageFormState extends State<RegisterPageForm> {
                 },
               ),
             ),
-
+            SizedBox(height: size.height * 0.02),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Checkbox(
+                  value: _acceptedTerms,
+                  onChanged: widget.isLoading
+                      ? null
+                      : (bool? value) {
+                          setState(() {
+                            _acceptedTerms = value ?? false;
+                            _showTermsError = false;
+                          });
+                        },
+                  activeColor: AppColors.primaryGreen,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: widget.isLoading
+                        ? null
+                        : () {
+                            setState(() {
+                              _acceptedTerms = !_acceptedTerms;
+                              _showTermsError = false;
+                            });
+                          },
+                    child: Text(
+                      'I agree to the Terms and Conditions and Privacy Policy',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: _showTermsError
+                            ? AppColors.error
+                            : AppColors.neutralTextGrey,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (_showTermsError)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'You must accept the terms and conditions to continue',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.error,
+                  ),
+                ),
+              ),
             SizedBox(height: size.height * 0.02),
             AppButton(
               text: 'Register',
