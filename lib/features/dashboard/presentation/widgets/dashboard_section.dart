@@ -54,17 +54,17 @@ class DashboardSection extends StatelessWidget {
                 ],
               ),
             ),
-            IconButton(
-              onPressed: () {
-                // Quick action: when pressing on a stat, navigate to the related section
-                if (title.toLowerCase().contains('event')) {
-                  onMenuTap('Events', false);
-                } else if (title.toLowerCase().contains('user')) {
-                  onMenuTap('Dashboard', false);
-                }
-              },
-              icon: const Icon(Icons.arrow_forward_ios, size: 16),
-            ),
+            // IconButton(
+            //   onPressed: () {
+            //     // Quick action: when pressing on a stat, navigate to the related section
+            //     if (title.toLowerCase().contains('event')) {
+            //       onMenuTap('Events', false);
+            //     } else if (title.toLowerCase().contains('user')) {
+            //       onMenuTap('Dashboard', false);
+            //     }
+            //   },
+            //   icon: const Icon(Icons.arrow_forward_ios, size: 16),
+            // ),
           ],
         ),
       ),
@@ -142,10 +142,13 @@ class DashboardSection extends StatelessWidget {
           ),
         ),
         Text(
-          'Welcome to the CO2 Portal admin dashboard.',
-          style: AppTextStyles.bodyLarge.copyWith(fontSize: subHeadingSize),
+          'Welcome to the COExist Portal Admin Dashboard.',
+          style: AppTextStyles.bodyLarge.copyWith(
+            fontSize: 12,
+            color: Colors.grey,
+          ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 36),
         // Stats
         // Stats
         statsSection,

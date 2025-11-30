@@ -222,16 +222,7 @@ class _DashboardPageState extends State<DashboardPage> {
               decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
               child: Image.asset('assets/images/coexist-logo.png'),
             ),
-            const SizedBox(height: 16),
-
-            Text(
-              'MENU',
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.neutralDarkerGrey,
-                fontSize: sidebarSmall,
-              ),
-            ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 50),
 
             // Menu items
             _navItem(
@@ -249,27 +240,8 @@ class _DashboardPageState extends State<DashboardPage> {
               fontSize: navLabelSize,
             ),
 
-            // _navItem(icon: Icons.flash_on, label: 'Energy', onTap: () {}),
-            // _navItem(icon: Icons.opacity, label: 'Water', onTap: () {}),
-            // _navItem(icon: Icons.flag, label: 'Goals', onTap: () {}),
-            // _navItem(icon: Icons.description, label: 'Reports', onTap: () {}),
-            // _navItem(icon: Icons.bar_chart, label: 'Analytics', onTap: () {}),
-            // _navItem(icon: Icons.people, label: 'Team', onTap: () {}),
             Spacer(),
-            Text(
-              'General',
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.neutralDarkerGrey,
-                fontSize: sidebarSmall,
-              ),
-            ),
-            const SizedBox(height: 10),
-            // _navItem(
-            //   icon: Icons.settings,
-            //   label: 'Settings',
-            //   onTap: () => _onMenuTap('Settings', isInDrawer),
-            //   fontSize: navLabelSize,
-            // ),
+
             _navItem(
               icon: Icons.logout,
               label: 'Logout',
