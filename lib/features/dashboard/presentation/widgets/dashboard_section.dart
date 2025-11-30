@@ -150,7 +150,16 @@ class DashboardSection extends StatelessWidget {
         ),
         const SizedBox(height: 36),
         // Stats
-        // Stats
+        //
+        Text(
+          'Statistics',
+          style: AppTextStyles.bodyLarge.copyWith(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: AppColors.primaryDarkGreen,
+          ),
+        ),
+        const SizedBox(height: 18),
         statsSection,
         const SizedBox(height: 18),
       ],
