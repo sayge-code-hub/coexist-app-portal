@@ -1,8 +1,9 @@
 import 'package:coexist_app_portal/core/theme/app_colors.dart';
 import 'package:coexist_app_portal/core/utils/app_router.dart';
 import 'package:coexist_app_portal/features/events/domain/models/event_model.dart';
+import 'package:coexist_app_portal/features/events/domain/models/registered_user_model.dart';
 import 'package:coexist_app_portal/features/events/presentation/widgets/event_detail_info.dart';
-import 'package:coexist_app_portal/features/events/presentation/widgets/event_utils.dart';
+import 'package:coexist_app_portal/features/events/presentation/widgets/registered_users_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/event_bloc.dart';
@@ -22,6 +23,8 @@ class EventDetailsPage extends StatefulWidget {
 class _EventDetailsPageState extends State<EventDetailsPage> {
   EventModel? _event;
   bool _isLoading = true;
+  List<RegisteredUserModel> _registeredUsers = [];
+  bool _isLoadingUsers = true;
 
   @override
   void initState() {
@@ -37,6 +40,8 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
         setState(() {
           _isLoading = false;
         });
+        // Load registered users after event is loaded
+        _loadRegisteredUsers();
       } catch (e) {
         // Event not found in current state, refresh events
         context.read<EventBloc>().add(const FetchEventsEvent());
@@ -47,9 +52,16 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
     }
   }
 
+  void _loadRegisteredUsers() {
+    if (_event != null) {
+      context.read<EventBloc>().add(
+        FetchRegisteredUsersEvent(eventId: _event!.id),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final bool isAdmin = isEventAdmin(context, _event);
     return BlocListener<EventBloc, EventState>(
       listener: (context, state) {
         if (state is EventsLoaded) {
@@ -58,6 +70,8 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
             setState(() {
               _isLoading = false;
             });
+            // Load registered users after event is found
+            _loadRegisteredUsers();
           } catch (e) {
             // Event not found
             ScaffoldMessenger.of(context).showSnackBar(
@@ -68,42 +82,27 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
             );
             Navigator.of(context).pushNamed(AppRoutes.events);
           }
+        } else if (state is RegisteredUsersLoaded) {
+          if (state.eventId == widget.eventId) {
+            setState(() {
+              _registeredUsers = state.registeredUsers;
+              _isLoadingUsers = false;
+            });
+          }
+        } else if (state is EventError) {
+          setState(() {
+            _isLoadingUsers = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.error,
+            ),
+          );
         }
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Event Details'),
-          actions: [
-            if (isAdmin)
-              Container(
-                margin: const EdgeInsets.only(right: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.secondaryAmber,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.admin_panel_settings,
-                      size: 16,
-                      color: Colors.white,
-                    ),
-                    SizedBox(width: 4),
-                    Text(
-                      'Admin',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
+        appBar: AppBar(title: const Text('Event Details')),
         body: SafeArea(
           child: _isLoading || _event == null
               ? const Center(child: CircularProgressIndicator())
@@ -113,7 +112,18 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
                       horizontal: 16.0,
                       vertical: 8.0,
                     ),
-                    child: EventDetailsInfo(event: _event),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        EventDetailsInfo(event: _event),
+                        RegisteredUsersList(registeredUsers: _registeredUsers),
+                        if (_isLoadingUsers)
+                          const Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
         ),

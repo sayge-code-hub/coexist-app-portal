@@ -7,6 +7,9 @@ class UserModel extends Equatable {
   final String? name;
   final DateTime? createdAt;
   final DateTime? lastSignInAt;
+  final DateTime? joinedAt;
+  final String? role;
+  final String? mobileNumber;
   final Map<String, dynamic>? metadata;
 
   const UserModel({
@@ -15,6 +18,9 @@ class UserModel extends Equatable {
     this.name,
     this.createdAt,
     this.lastSignInAt,
+    this.joinedAt,
+    this.role,
+    this.mobileNumber,
     this.metadata,
   });
 
@@ -23,13 +29,18 @@ class UserModel extends Equatable {
     return UserModel(
       id: data['id'],
       email: data['email'],
-      name: data['user_metadata']?['name'],
-      createdAt: data['created_at'] != null 
-          ? DateTime.parse(data['created_at']) 
+      name: data['name'],
+      createdAt: data['created_at'] != null
+          ? DateTime.parse(data['created_at'])
           : null,
-      lastSignInAt: data['last_sign_in_at'] != null 
-          ? DateTime.parse(data['last_sign_in_at']) 
+      lastSignInAt: data['last_sign_in_at'] != null
+          ? DateTime.parse(data['last_sign_in_at'])
           : null,
+      joinedAt: data['joined_at'] != null
+          ? DateTime.parse(data['joined_at'])
+          : null,
+      role: data['role'] ?? 'user',
+      mobileNumber: data['mobile_number'],
       metadata: data['user_metadata'],
     );
   }
@@ -42,6 +53,9 @@ class UserModel extends Equatable {
       'name': name,
       'created_at': createdAt?.toIso8601String(),
       'last_sign_in_at': lastSignInAt?.toIso8601String(),
+      'joined_at': joinedAt?.toIso8601String(),
+      'role': role,
+      'mobile_number': mobileNumber,
       'metadata': metadata,
     };
   }
@@ -52,16 +66,30 @@ class UserModel extends Equatable {
       id: map['id'],
       email: map['email'],
       name: map['name'],
-      createdAt: map['created_at'] != null 
-          ? DateTime.parse(map['created_at']) 
+      createdAt: map['created_at'] != null
+          ? DateTime.parse(map['created_at'])
           : null,
-      lastSignInAt: map['last_sign_in_at'] != null 
-          ? DateTime.parse(map['last_sign_in_at']) 
+      lastSignInAt: map['last_sign_in_at'] != null
+          ? DateTime.parse(map['last_sign_in_at'])
           : null,
+      joinedAt: map['joined_at'] != null
+          ? DateTime.parse(map['joined_at'])
+          : null,
+      role: map['role'] ?? 'user',
+      mobileNumber: map['mobile_number'],
       metadata: map['metadata'],
     );
   }
 
   @override
-  List<Object?> get props => [id, email, name, createdAt, lastSignInAt];
+  List<Object?> get props => [
+    id,
+    email,
+    name,
+    createdAt,
+    lastSignInAt,
+    joinedAt,
+    role,
+    mobileNumber,
+  ];
 }

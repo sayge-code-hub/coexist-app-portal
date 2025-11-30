@@ -26,6 +26,7 @@ class EventBloc extends Bloc<EventEvent, EventState> {
     on<RefreshEventsEvent>(_onRefreshEvents);
     on<CheckEventPaidEvent>(_onCheckEventPaid);
     on<ApproveEvent>(_onApproveEvent);
+    on<FetchRegisteredUsersEvent>(_onFetchRegisteredUsers);
   }
 
   Future<void> _onApproveEvent(
@@ -301,6 +302,36 @@ class EventBloc extends Bloc<EventEvent, EventState> {
       emit(
         EventError(
           message: 'Failed to check event paid status: ${e.toString()}',
+        ),
+      );
+    }
+  }
+
+  /// Handle fetching registered users for an event
+  Future<void> _onFetchRegisteredUsers(
+    FetchRegisteredUsersEvent event,
+    Emitter<EventState> emit,
+  ) async {
+    print(
+      '🔄 EVENT BLOC: Fetching registered users for event: ${event.eventId}',
+    );
+    emit(const EventLoading());
+    try {
+      final registeredUsers = await _eventRepository.getRegisteredUsersForEvent(
+        event.eventId,
+      );
+      print('✅ EVENT BLOC: Fetched ${registeredUsers.length} registered users');
+      emit(
+        RegisteredUsersLoaded(
+          eventId: event.eventId,
+          registeredUsers: registeredUsers,
+        ),
+      );
+    } catch (e) {
+      print('❌ EVENT BLOC ERROR: ${e.toString()}');
+      emit(
+        EventError(
+          message: 'Failed to fetch registered users: ${e.toString()}',
         ),
       );
     }

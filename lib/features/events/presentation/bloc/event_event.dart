@@ -110,3 +110,13 @@ class ApproveEvent extends EventEvent {
   @override
   List<Object?> get props => [event];
 }
+
+/// Event to fetch registered users for an event
+class FetchRegisteredUsersEvent extends EventEvent {
+  final String eventId;
+
+  const FetchRegisteredUsersEvent({required this.eventId});
+
+  @override
+  List<Object?> get props => [eventId];
+}

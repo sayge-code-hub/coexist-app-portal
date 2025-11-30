@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import '../models/event_model.dart';
 import '../models/event_registration_model.dart';
+import '../models/registered_user_model.dart';
 
 /// Interface for event operations
 abstract class EventRepository {
@@ -39,4 +40,7 @@ abstract class EventRepository {
   Future<bool> isEventPaid(String eventId);
 
   Future<bool> approveEvent(EventModel event);
+
+  /// Get all users registered for an event with their profile information
+  Future<List<RegisteredUserModel>> getRegisteredUsersForEvent(String eventId);
 }

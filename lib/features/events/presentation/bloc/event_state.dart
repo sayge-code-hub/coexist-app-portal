@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../../domain/models/event_model.dart';
 import '../../domain/models/event_registration_model.dart';
+import '../../domain/models/registered_user_model.dart';
 
 /// Base class for all event states
 abstract class EventState extends Equatable {
@@ -157,4 +158,18 @@ class EventPaidStatusChecked extends EventState {
 
   @override
   List<Object?> get props => [eventId, isPaid];
+}
+
+/// State when registered users for an event are loaded
+class RegisteredUsersLoaded extends EventState {
+  final String eventId;
+  final List<RegisteredUserModel> registeredUsers;
+
+  const RegisteredUsersLoaded({
+    required this.eventId,
+    required this.registeredUsers,
+  });
+
+  @override
+  List<Object?> get props => [eventId, registeredUsers];
 }

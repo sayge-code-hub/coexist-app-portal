@@ -113,7 +113,6 @@ class EventDetailsInfo extends StatelessWidget {
                 icon: Icons.warning_amber_outlined,
               ),
             ),
-          const SizedBox(height: 100),
         ],
       ],
     );

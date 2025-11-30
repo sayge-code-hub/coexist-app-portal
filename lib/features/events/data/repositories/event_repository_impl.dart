@@ -5,6 +5,8 @@ import 'package:dio/dio.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/models/event_model.dart';
 import '../../domain/models/event_registration_model.dart';
+import '../../domain/models/registered_user_model.dart';
+import '../../../auth/domain/models/user_model.dart';
 import '../../domain/repositories/event_repository.dart';
 
 /// Implementation of EventRepository using Supabase
@@ -13,6 +15,7 @@ class EventRepositoryImpl implements EventRepository {
   final ApiClient _apiClient;
   static const String _eventsTable = 'events';
   static const String _registrationsTable = 'event_registrations';
+  static const String _usersTable = 'users';
 
   EventRepositoryImpl({
     required SupabaseClient supabaseClient,
@@ -435,5 +438,66 @@ class EventRepositoryImpl implements EventRepository {
     //   print('❌ EVENTS ERROR: ${e.toString()}');
     //   return false;
     // }
+  }
+
+  @override
+  Future<List<RegisteredUserModel>> getRegisteredUsersForEvent(
+    String eventId,
+  ) async {
+    print('🔍 EVENTS: Fetching registered users for event: $eventId');
+    try {
+      // Get registrations for the event
+      final registrationsResponse = await _supabaseClient
+          .from(_registrationsTable)
+          .select()
+          .eq('event_id', eventId)
+          .order('registered_at', ascending: false);
+
+      if (registrationsResponse.isEmpty) {
+        print('✅ EVENTS: No users registered for this event');
+        return [];
+      }
+
+      // Extract user IDs from registrations
+      final userIds = registrationsResponse
+          .map((data) => data['user_id'] as String)
+          .where((id) => id.isNotEmpty)
+          .toList();
+
+      if (userIds.isEmpty) {
+        print('✅ EVENTS: No valid user IDs found in registrations');
+        return [];
+      }
+
+      // Fetch user profiles for these users from users table
+      final usersResponse = await _supabaseClient
+          .from(_usersTable)
+          .select()
+          .inFilter('id', userIds);
+
+      // Create a map of userId -> UserModel for quick lookup
+      final Map<String, UserModel> usersMap = {};
+      for (final userData in usersResponse) {
+        final user = UserModel.fromSupabase(userData);
+        usersMap[user.id] = user;
+      }
+
+      // Combine registration data with user profiles
+      final registeredUsers = registrationsResponse.map((registrationData) {
+        final userId = registrationData['user_id'] as String;
+        final user = usersMap[userId];
+
+        return RegisteredUserModel.fromRegistrationAndUser(
+          registrationData,
+          user,
+        );
+      }).toList();
+
+      print('✅ EVENTS: Fetched ${registeredUsers.length} registered users');
+      return registeredUsers;
+    } catch (e) {
+      print('❌ EVENTS ERROR: ${e.toString()}');
+      return [];
+    }
   }
 }
