@@ -269,6 +269,40 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
+  void _showLogoutDialog(BuildContext context, String name) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent closing by tapping outside
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirm Logout'),
+          content: Text('Are you sure you want to logout, $name?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+                setState(() {
+                  _selectedMenu = 'Dashboard'; // Reset to Dashboard
+                });
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+                context.read<AuthBloc>().add(const LogoutEvent());
+                Navigator.of(
+                  context,
+                ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
+              },
+              child: Text('Logout'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _navItem({
     required IconData icon,
     required String label,
@@ -361,25 +395,18 @@ class _DashboardPageState extends State<DashboardPage> {
       );
     }
     if (_selectedMenu == 'Logout') {
-      return AlertDialog(
-        title: Text('Confirm Logout'),
-        content: Text('Are you sure you want to logout, $name?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              context.read<AuthBloc>().add(const LogoutEvent());
-              Navigator.of(
-                context,
-              ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
-            },
-            child: Text('Logout'),
-          ),
-        ],
+      // Show logout dialog as overlay
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showLogoutDialog(context, name);
+      });
+      // Return the previous screen (Dashboard) as background
+      return DashboardSection(
+        isWide: isWide,
+        name: name,
+        headingSize: headingSize,
+        subHeadingSize: subHeadingSize,
+        stats: _stats,
+        onMenuTap: _onMenuTap,
       );
     }
     // Default: show selected menu label centered
