@@ -27,6 +27,35 @@ class EventBloc extends Bloc<EventEvent, EventState> {
     on<CheckEventPaidEvent>(_onCheckEventPaid);
     on<ApproveEvent>(_onApproveEvent);
     on<FetchRegisteredUsersEvent>(_onFetchRegisteredUsers);
+    on<SetEventBannerStatusEvent>(_onSetEventBannerStatus);
+  }
+
+  Future<void> _onSetEventBannerStatus(
+    SetEventBannerStatusEvent event,
+    Emitter<EventState> emit,
+  ) async {
+    print('🔄 EVENT BLOC: Setting event banner status');
+    emit(const EventLoading());
+    try {
+      final success = await _eventRepository.setEventBannerStatus(
+        event.eventId,
+        event.isBanner,
+      );
+      if (success) {
+        print('✅ EVENT BLOC: Event banner status updated successfully');
+        add(FetchEventsEvent());
+      } else {
+        print('❌ EVENT BLOC: Failed to update event banner status');
+        emit(const EventError(message: 'Failed to update event banner status'));
+      }
+    } catch (e) {
+      print('❌ EVENT BLOC ERROR: ${e.toString()}');
+      emit(
+        EventError(
+          message: 'Failed to update event banner status: ${e.toString()}',
+        ),
+      );
+    }
   }
 
   Future<void> _onApproveEvent(
@@ -140,7 +169,10 @@ class EventBloc extends Bloc<EventEvent, EventState> {
     print('🔄 EVENT BLOC: Updating event');
     emit(const EventLoading());
     try {
-      final updatedEvent = await _eventRepository.updateEvent(event.event);
+      final updatedEvent = await _eventRepository.updateEvent(
+        event.event,
+        event.imageData,
+      );
       if (updatedEvent != null) {
         print('✅ EVENT BLOC: Event updated successfully');
         emit(EventUpdated(event: updatedEvent));

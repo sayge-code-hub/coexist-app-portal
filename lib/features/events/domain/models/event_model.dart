@@ -6,6 +6,7 @@ class EventModel extends Equatable {
   final String title;
   final String description;
   final DateTime date;
+  final DateTime? endDate;
   final String location;
   final String organizer;
   final String organizerEmail;
@@ -18,12 +19,14 @@ class EventModel extends Equatable {
   final bool isRegistered;
   final bool isPaid;
   final double? price;
+  final bool isBanner;
 
   const EventModel({
     required this.id,
     required this.title,
     required this.description,
     required this.date,
+    this.endDate,
     required this.location,
     required this.organizer,
     this.organizerEmail = '',
@@ -36,6 +39,7 @@ class EventModel extends Equatable {
     this.isRegistered = false,
     this.isPaid = false,
     this.price,
+    this.isBanner = false,
   });
 
   /// Create an EventModel from Supabase data
@@ -50,6 +54,9 @@ class EventModel extends Equatable {
       date: data['date'] != null
           ? DateTime.parse(data['date'].toString())
           : DateTime.now(),
+      endDate: data['end_date'] != null
+          ? DateTime.parse(data['end_date'].toString())
+          : null,
       location: data['location'] ?? '',
       organizer: data['organizer'] ?? '',
       organizerEmail: data['organizer_email'] ?? '',
@@ -64,6 +71,7 @@ class EventModel extends Equatable {
       isRegistered: isRegistered,
       isPaid: data['is_paid'] ?? false,
       price: data['price'] != null ? (data['price'] as num).toDouble() : null,
+      isBanner: data['is_banner'] ?? false,
     );
   }
 
@@ -83,11 +91,17 @@ class EventModel extends Equatable {
       'created_by': createdBy,
       'status': status,
       'is_paid': isPaid,
+      'is_banner': isBanner,
     };
 
     // Only include price if the event is paid
     if (isPaid && price != null) {
       map['price'] = price!;
+    }
+
+    // Include end_date if it exists
+    if (endDate != null) {
+      map['end_date'] = endDate!.toIso8601String();
     }
 
     // Debug logging
@@ -104,6 +118,7 @@ class EventModel extends Equatable {
     String? title,
     String? description,
     DateTime? date,
+    DateTime? endDate,
     String? location,
     String? organizer,
     String? organizerEmail,
@@ -116,12 +131,14 @@ class EventModel extends Equatable {
     bool? isRegistered,
     bool? isPaid,
     double? price,
+    bool? isBanner,
   }) {
     return EventModel(
       id: id ?? this.id,
       title: title ?? this.title,
       description: description ?? this.description,
       date: date ?? this.date,
+      endDate: endDate ?? this.endDate,
       location: location ?? this.location,
       organizer: organizer ?? this.organizer,
       organizerEmail: organizerEmail ?? this.organizerEmail,
@@ -134,6 +151,7 @@ class EventModel extends Equatable {
       isRegistered: isRegistered ?? this.isRegistered,
       isPaid: isPaid ?? this.isPaid,
       price: price ?? this.price,
+      isBanner: isBanner ?? this.isBanner,
     );
   }
 
@@ -143,6 +161,7 @@ class EventModel extends Equatable {
     title,
     description,
     date,
+    endDate,
     location,
     organizer,
     organizerEmail,
@@ -155,5 +174,6 @@ class EventModel extends Equatable {
     isRegistered,
     isPaid,
     price,
+    isBanner,
   ];
 }

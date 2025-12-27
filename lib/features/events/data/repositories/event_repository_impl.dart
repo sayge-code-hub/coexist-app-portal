@@ -140,63 +140,83 @@ class EventRepositoryImpl implements EventRepository {
   @override
   Future<EventModel?> createEvent(EventModel event, Uint8List bytes) async {
     print('🔍 EVENTS: Creating new event: ${event.title}');
-    // try {
-    // Get current user ID
-    final userId = _supabaseClient.auth.currentUser?.id;
-    if (userId == null) {
-      print('❌ EVENTS: No authenticated user found');
+    try {
+      // Get current user ID
+      final userId = _supabaseClient.auth.currentUser?.id;
+      if (userId == null) {
+        print('❌ EVENTS: No authenticated user found');
+        return null;
+      }
+      final fileName = "event_${DateTime.now().millisecondsSinceEpoch}.png";
+
+      // 1️⃣ Upload binary file to bucket: events
+      await _supabaseClient.storage
+          .from("events")
+          .uploadBinary(
+            fileName,
+            bytes,
+            fileOptions: const FileOptions(contentType: "image/png"),
+          );
+
+      // 2️⃣ Generate signed URL (valid for 10 years)
+      final tenYearsSeconds = 315360000;
+
+      final signedUrl = await _supabaseClient.storage
+          .from("events")
+          .createSignedUrl(fileName, tenYearsSeconds);
+      final updatedEvent = event.copyWith(imageUrl: signedUrl);
+      // Create event with current user as creator
+      final eventData = {...updatedEvent.toSupabase(), 'created_by': userId};
+
+      // Remove any null or empty values that might cause issues
+      eventData.removeWhere(
+        (key, value) => value == null || (value is String && value.isEmpty),
+      );
+
+      // Ensure date is properly formatted
+      if (eventData.containsKey('date')) {
+        final date = event.date;
+        eventData['date'] = date.toUtc().toIso8601String();
+      }
+
+      final response = await _supabaseClient
+          .from(_eventsTable)
+          .insert(eventData)
+          .select()
+          .single();
+
+      print('✅ EVENTS: Event created successfully');
+      return EventModel.fromSupabase(response);
+    } catch (e) {
+      print('❌ EVENTS ERROR: ${e.toString()}');
       return null;
     }
-    final fileName = "event_${DateTime.now().millisecondsSinceEpoch}.png";
-
-    // 1️⃣ Upload binary file to bucket: events
-    await _supabaseClient.storage
-        .from("events")
-        .uploadBinary(
-          fileName,
-          bytes,
-          fileOptions: const FileOptions(contentType: "image/png"),
-        );
-
-    // 2️⃣ Generate signed URL (valid for 10 years)
-    final tenYearsSeconds = 315360000;
-
-    final signedUrl = await _supabaseClient.storage
-        .from("events")
-        .createSignedUrl(fileName, tenYearsSeconds);
-    final updatedEvent = event.copyWith(imageUrl: signedUrl);
-    // Create event with current user as creator
-    final eventData = {...updatedEvent.toSupabase(), 'created_by': userId};
-
-    // Remove any null or empty values that might cause issues
-    eventData.removeWhere(
-      (key, value) => value == null || (value is String && value.isEmpty),
-    );
-
-    // Ensure date is properly formatted
-    if (eventData.containsKey('date')) {
-      final date = event.date;
-      eventData['date'] = date.toUtc().toIso8601String();
-    }
-
-    final response = await _supabaseClient
-        .from(_eventsTable)
-        .insert(eventData)
-        .select()
-        .single();
-
-    print('✅ EVENTS: Event created successfully');
-    return EventModel.fromSupabase(response);
-    // } catch (e) {
-    //   print('❌ EVENTS ERROR: ${e.toString()}');
-    //   return null;
-    // }
   }
 
   @override
-  Future<EventModel?> updateEvent(EventModel event) async {
+  Future<EventModel?> updateEvent(EventModel event, Uint8List? bytes) async {
     print('🔍 EVENTS: Updating event: ${event.id}');
     try {
+      if (event.imageUrl == "Image selected") {
+        final fileName = "event_${DateTime.now().millisecondsSinceEpoch}.png";
+
+        // 1️⃣ Upload binary file to bucket: events
+        await _supabaseClient.storage
+            .from("events")
+            .uploadBinary(
+              fileName,
+              bytes!,
+              fileOptions: const FileOptions(contentType: "image/png"),
+            );
+
+        // 2️⃣ Generate signed URL (valid for 10 years)
+        final tenYearsSeconds = 315360000;
+
+        final signedUrl = await _supabaseClient.storage
+            .from("events")
+            .createSignedUrl(fileName, tenYearsSeconds);
+        event = event.copyWith(imageUrl: signedUrl);
+      }
       final response = await _supabaseClient
           .from(_eventsTable)
           .update(event.toSupabase())
@@ -498,6 +518,28 @@ class EventRepositoryImpl implements EventRepository {
     } catch (e) {
       print('❌ EVENTS ERROR: ${e.toString()}');
       return [];
+    }
+  }
+
+  @override
+  Future<bool> setEventBannerStatus(String eventId, bool isBanner) async {
+    try {
+      // Step 1: Set all rows to is_banner = false
+      await _supabaseClient
+          .from(_eventsTable)
+          .update({'is_banner': false})
+          .neq('id', eventId);
+
+      // Step 2: Set selected row to is_banner = true
+      await _supabaseClient
+          .from(_eventsTable)
+          .update({'is_banner': true})
+          .eq('id', eventId);
+
+      return true;
+    } catch (e) {
+      print('Error setting banner: $e');
+      return false;
     }
   }
 }

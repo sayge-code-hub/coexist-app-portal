@@ -19,7 +19,7 @@ abstract class EventRepository {
   Future<EventModel?> createEvent(EventModel event, Uint8List bytes);
 
   /// Update an existing event
-  Future<EventModel?> updateEvent(EventModel event);
+  Future<EventModel?> updateEvent(EventModel event, Uint8List? bytes);
 
   /// Delete an event
   Future<bool> deleteEvent(String eventId);
@@ -43,4 +43,6 @@ abstract class EventRepository {
 
   /// Get all users registered for an event with their profile information
   Future<List<RegisteredUserModel>> getRegisteredUsersForEvent(String eventId);
+
+  Future<bool> setEventBannerStatus(String eventId, bool isBanner);
 }

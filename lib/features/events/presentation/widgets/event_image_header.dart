@@ -29,9 +29,9 @@ class EventImageHeader extends StatelessWidget {
       child: event.imageUrl.isNotEmpty
           ? Image.network(
               event.imageUrl,
-              height: 200,
-              width: double.infinity,
-              fit: BoxFit.cover,
+              // height: 200,
+              width: MediaQuery.of(context).size.width * 0.3,
+              fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) {
                 return Container(
                   height: 200,

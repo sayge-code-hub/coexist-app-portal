@@ -110,6 +110,115 @@ class EventsSection extends StatelessWidget {
                   ),
                 ),
 
+                // Banner toggle (admin only)
+                if (isAdmin)
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Banner',
+                            style: const TextStyle(
+                              color: AppColors.primaryGreen,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Switch.adaptive(
+                            key: ValueKey('banner_switch_${event.id}'),
+                            value: event.isBanner,
+                            inactiveThumbColor: Colors.black54,
+                            activeThumbColor: AppColors.primaryGreen,
+                            activeTrackColor: AppColors.neutralWhite,
+                            trackOutlineColor:
+                                WidgetStateProperty.resolveWith<Color?>((
+                                  Set<WidgetState> states,
+                                ) {
+                                  if (states.contains(WidgetState.selected)) {
+                                    return AppColors.primaryGreen;
+                                  }
+                                  return null; // Use the default color.
+                                }),
+                            thumbColor: WidgetStateProperty.resolveWith<Color?>(
+                              (Set<WidgetState> states) {
+                                if (states.contains(WidgetState.selected)) {
+                                  return AppColors.primaryGreen;
+                                }
+                                return null; // Use the default color.
+                              },
+                            ),
+                            onChanged: event.isBanner
+                                ? null
+                                : (value) async {
+                                    // Only proceed when switching ON
+                                    if (!value) return;
+
+                                    // Check if widget is still mounted before showing dialog
+                                    if (!context.mounted) return;
+
+                                    final confirmed = await showDialog<bool>(
+                                      context: context,
+                                      builder: (ctx) {
+                                        return AlertDialog(
+                                          title: const Text('Set as banner?'),
+                                          content: const Text(
+                                            'Are you sure you want to set this event as the banner?',
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () {
+                                                Navigator.of(ctx).pop(false);
+                                              },
+                                              child: const Text('Cancel'),
+                                            ),
+                                            TextButton(
+                                              onPressed: () {
+                                                Navigator.of(ctx).pop(true);
+                                              },
+                                              child: const Text('Confirm'),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+
+                                    // Check if widget is still mounted after dialog closes
+                                    if (!context.mounted) return;
+
+                                    if (confirmed == true) {
+                                      context.read<EventBloc>().add(
+                                        SetEventBannerStatusEvent(
+                                          eventId: event.id,
+                                          isBanner: true,
+                                        ),
+                                      );
+                                    }
+                                  },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
                 // Price badge (if paid event)
                 if (event.isPaid && event.price != null)
                   Positioned(
@@ -394,6 +503,15 @@ class EventsSection extends StatelessWidget {
                       SnackBar(
                         content: Text(state.message),
                         backgroundColor: AppColors.error,
+                      ),
+                    );
+                  } else if (state is EventUpdated) {
+                    // Refresh events to reflect banner changes
+                    context.read<EventBloc>().add(const FetchEventsEvent());
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Event updated successfully.'),
+                        backgroundColor: AppColors.primaryGreen,
                       ),
                     );
                   }

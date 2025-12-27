@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:coexist_app_portal/core/common_widgets/app_button.dart';
@@ -40,6 +41,7 @@ class _CreateEventFormState extends State<CreateEventForm> {
   final _priceController = TextEditingController();
 
   DateTime _selectedDate = DateTime.now();
+  DateTime _selectedEndDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
   bool _isPaid = false;
   bool _isCreating = false;
@@ -74,6 +76,7 @@ class _CreateEventFormState extends State<CreateEventForm> {
     _imageUrlController.text = event.imageUrl;
     _priceController.text = event.price?.toString() ?? '';
     _selectedDate = event.date;
+    _selectedEndDate = event.endDate ?? event.date;
     _selectedTime = TimeOfDay.fromDateTime(event.date);
     _isPaid = event.isPaid;
     _originalCreatedBy = event.createdBy; // Store original created_by
@@ -93,7 +96,11 @@ class _CreateEventFormState extends State<CreateEventForm> {
       lastDate: DateTime(2101),
     );
     if (picked != null && picked != _selectedDate) {
-      setState(() => _selectedDate = picked);
+      setState(() {
+        _selectedDate = picked;
+        // Update end date to match start date
+        _selectedEndDate = picked;
+      });
     }
   }
 
@@ -104,6 +111,22 @@ class _CreateEventFormState extends State<CreateEventForm> {
     );
     if (picked != null && picked != _selectedTime) {
       setState(() => _selectedTime = picked);
+    }
+  }
+
+  Future<void> _selectEndDate(BuildContext context) async {
+    final DateTime initialDate = _selectedEndDate.isBefore(_selectedDate)
+        ? _selectedDate.add(const Duration(days: 1))
+        : _selectedEndDate;
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: _selectedDate, // End date must be after start date
+      lastDate: DateTime(2101),
+    );
+    if (picked != null && picked != _selectedEndDate) {
+      setState(() => _selectedEndDate = picked);
     }
   }
 
@@ -135,7 +158,14 @@ class _CreateEventFormState extends State<CreateEventForm> {
         id: _isEditMode ? widget.eventId! : '', // Use existing ID for edit mode
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
-        date: _selectedDate,
+        date: DateTime(
+          _selectedDate.year,
+          _selectedDate.month,
+          _selectedDate.day,
+          _selectedTime.hour,
+          _selectedTime.minute,
+        ),
+        endDate: _selectedEndDate,
         location: _locationController.text.trim(),
         organizer: _organizerController.text.trim(),
         organizerEmail: _organizerEmailController.text.trim(),
@@ -151,13 +181,22 @@ class _CreateEventFormState extends State<CreateEventForm> {
         price: _priceController.text.isNotEmpty
             ? double.parse(_priceController.text.trim())
             : 0,
+        isBanner: false,
       );
 
       print('🔍 EVENT MODEL: ID = ${event.id}, Title = ${event.title}');
-
+      print('event data ${jsonEncode(event.toSupabase())}');
+      print('time: ${_selectedTime.hour}:${_selectedTime.minute}');
       if (_isEditMode) {
         // Update existing event
-        context.read<EventBloc>().add(UpdateEventEvent(event: event));
+        context.read<EventBloc>().add(
+          UpdateEventEvent(
+            event: event,
+            imageData: _imageUrlController.text == "Image selected"
+                ? _eventImageBytes
+                : null,
+          ),
+        );
       } else {
         // Create new event
         context.read<EventBloc>().add(
@@ -230,7 +269,14 @@ class _CreateEventFormState extends State<CreateEventForm> {
               final event = state.events.firstWhere(
                 (e) => e.id == widget.eventId,
               );
-              _populateFormFields(event);
+              // Use addPostFrameCallback to avoid setState during build
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  setState(() {
+                    _populateFormFields(event);
+                  });
+                }
+              });
             } catch (e) {
               // Event not found, show error
               ScaffoldMessenger.of(context).showSnackBar(
@@ -391,11 +437,13 @@ class _CreateEventFormState extends State<CreateEventForm> {
                 ),
                 const SizedBox(height: 16),
 
-                // Date + Time
+                // Date + End Date + Time
                 isWide
                     ? Row(
                         children: [
                           Expanded(child: _buildDatePicker(context)),
+                          const SizedBox(width: 16),
+                          Expanded(child: _buildEndDatePicker(context)),
                           const SizedBox(width: 16),
                           Expanded(child: _buildTimePicker(context)),
                         ],
@@ -403,6 +451,8 @@ class _CreateEventFormState extends State<CreateEventForm> {
                     : Column(
                         children: [
                           _buildDatePicker(context),
+                          const SizedBox(height: 16),
+                          _buildEndDatePicker(context),
                           const SizedBox(height: 16),
                           _buildTimePicker(context),
                         ],
@@ -579,7 +629,7 @@ class _CreateEventFormState extends State<CreateEventForm> {
       onTap: () => _selectDate(context),
       child: InputDecorator(
         decoration: InputDecoration(
-          labelText: 'Date',
+          labelText: 'Start Date',
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
@@ -620,6 +670,32 @@ class _CreateEventFormState extends State<CreateEventForm> {
               style: AppTextStyles.bodyMedium,
             ),
             const Icon(Icons.access_time, size: 18),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEndDatePicker(BuildContext context) {
+    return InkWell(
+      onTap: () => _selectEndDate(context),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: 'End Date',
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              DateFormat('MMM dd, yyyy').format(_selectedEndDate),
+              style: AppTextStyles.bodyMedium,
+            ),
+            const Icon(Icons.calendar_today, size: 18),
           ],
         ),
       ),

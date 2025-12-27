@@ -102,7 +102,10 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
         }
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('Event Details')),
+        appBar: AppBar(
+          title: const Text('Event Details'),
+          automaticallyImplyLeading: false,
+        ),
         body: SafeArea(
           child: _isLoading || _event == null
               ? const Center(child: CircularProgressIndicator())

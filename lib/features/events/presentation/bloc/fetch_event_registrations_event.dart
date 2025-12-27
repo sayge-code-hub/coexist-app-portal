@@ -1,5 +1,3 @@
-import 'package:equatable/equatable.dart';
-
 import 'event_event.dart';
 
 class FetchEventRegistrationsEvent extends EventEvent {

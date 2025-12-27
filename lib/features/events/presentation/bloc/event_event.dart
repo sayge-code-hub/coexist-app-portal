@@ -40,11 +40,12 @@ class CreateEventEvent extends EventEvent {
 /// Event to update an existing event
 class UpdateEventEvent extends EventEvent {
   final EventModel event;
+  final Uint8List? imageData;
 
-  const UpdateEventEvent({required this.event});
+  const UpdateEventEvent({required this.event, this.imageData});
 
   @override
-  List<Object?> get props => [event];
+  List<Object?> get props => [event, imageData];
 }
 
 /// Event to delete an event
@@ -119,4 +120,17 @@ class FetchRegisteredUsersEvent extends EventEvent {
 
   @override
   List<Object?> get props => [eventId];
+}
+
+class SetEventBannerStatusEvent extends EventEvent {
+  final String eventId;
+  final bool isBanner;
+
+  const SetEventBannerStatusEvent({
+    required this.eventId,
+    required this.isBanner,
+  });
+
+  @override
+  List<Object?> get props => [eventId, isBanner];
 }
