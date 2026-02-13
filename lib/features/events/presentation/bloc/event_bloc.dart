@@ -64,21 +64,21 @@ class EventBloc extends Bloc<EventEvent, EventState> {
   ) async {
     print('🔄 EVENT BLOC: Approving event');
     emit(const EventLoading());
-    // try {
-    final success = await _eventRepository.approveEvent(event.event);
-    if (success) {
-      print('✅ EVENT BLOC: Event approved successfully');
-      add(FetchEventsEvent());
-    } else {
-      print('❌ EVENT BLOC: Failed to approve event');
-      emit(const EventApproveError(message: 'Failed to approve event'));
+    try {
+      final success = await _eventRepository.approveEvent(event.event);
+      if (success) {
+        print('✅ EVENT BLOC: Event approved successfully');
+        add(FetchEventsEvent());
+      } else {
+        print('❌ EVENT BLOC: Failed to approve event');
+        emit(const EventApproveError(message: 'Failed to approve event'));
+      }
+    } catch (e) {
+      print('❌ EVENT BLOC ERROR: ${e.toString()}');
+      emit(
+        EventApproveError(message: 'Failed to approve event: ${e.toString()}'),
+      );
     }
-    // } catch (e) {
-    //   print('❌ EVENT BLOC ERROR: ${e.toString()}');
-    //   emit(
-    //     EventApproveError(message: 'Failed to approve event: ${e.toString()}'),
-    //   );
-    // }
   }
 
   /// Handle fetching all events
@@ -139,26 +139,26 @@ class EventBloc extends Bloc<EventEvent, EventState> {
   ) async {
     print('🔄 EVENT BLOC: Creating new event');
     emit(const EventLoading());
-    // try {
-    final createdEvent = await _eventRepository.createEvent(
-      event.event,
-      event.imageData,
-    );
-    if (createdEvent != null) {
-      print('✅ EVENT BLOC: Event created successfully');
-      emit(EventCreated(event: createdEvent));
+    try {
+      final createdEvent = await _eventRepository.createEvent(
+        event.event,
+        event.imageData,
+      );
+      if (createdEvent != null) {
+        print('✅ EVENT BLOC: Event created successfully');
+        emit(EventCreated(event: createdEvent));
 
-      // Refresh events list
-      final events = await _eventRepository.getEvents();
-      emit(EventsLoaded(events: events));
-    } else {
-      print('❌ EVENT BLOC: Failed to create event');
-      emit(const EventError(message: 'Failed to create event'));
+        // Refresh events list
+        final events = await _eventRepository.getEvents();
+        emit(EventsLoaded(events: events));
+      } else {
+        print('❌ EVENT BLOC: Failed to create event');
+        emit(const EventError(message: 'Failed to create event'));
+      }
+    } catch (e) {
+      print('❌ EVENT BLOC ERROR: ${e.toString()}');
+      emit(EventError(message: 'Failed to create event: ${e.toString()}'));
     }
-    // } catch (e) {
-    //   print('❌ EVENT BLOC ERROR: ${e.toString()}');
-    //   emit(EventError(message: 'Failed to create event: ${e.toString()}'));
-    // }
   }
 
   /// Handle updating an existing event
@@ -202,10 +202,6 @@ class EventBloc extends Bloc<EventEvent, EventState> {
       if (success) {
         print('✅ EVENT BLOC: Event deleted successfully');
         emit(EventDeleted(eventId: event.eventId));
-
-        // Refresh events list
-        final events = await _eventRepository.getEvents();
-        emit(EventsLoaded(events: events));
       } else {
         print('❌ EVENT BLOC: Failed to delete event');
         emit(const EventError(message: 'Failed to delete event'));

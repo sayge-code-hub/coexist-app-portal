@@ -12,6 +12,7 @@ import 'package:coexist_app_portal/features/events/presentation/bloc/event_bloc.
 import 'package:coexist_app_portal/features/events/presentation/bloc/event_event.dart';
 import 'package:coexist_app_portal/features/events/presentation/bloc/event_state.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -238,9 +239,7 @@ class _CreateEventFormState extends State<CreateEventForm> {
             });
 
             // Navigate back to dashboard
-            Navigator.of(
-              context,
-            ).pushNamedAndRemoveUntil(AppRoutes.dashboard, (route) => false);
+            context.go(AppRoutes.dashboard);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
@@ -285,7 +284,7 @@ class _CreateEventFormState extends State<CreateEventForm> {
                   backgroundColor: AppColors.error,
                 ),
               );
-              Navigator.of(context).pop();
+              context.pop();
             }
           }
         },

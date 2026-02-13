@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/common_widgets/app_button.dart';
 import '../../../../core/common_widgets/app_text_field.dart';
@@ -48,9 +49,7 @@ class _SetNewPasswordPageState extends State<SetNewPasswordPage> {
           duration: Duration(seconds: 3),
         ),
       );
-      Navigator.of(
-        context,
-      ).pushNamedAndRemoveUntil(AppRoutes.login, (r) => false);
+      context.go(AppRoutes.login);
     } on AuthException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -107,9 +106,14 @@ class _SetNewPasswordPageState extends State<SetNewPasswordPage> {
                 constraints: BoxConstraints(maxWidth: isWide ? 700 : 600),
                 child: Card(
                   elevation: 4,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: isWide ? 32 : 20, vertical: isWide ? 24 : 16),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isWide ? 32 : 20,
+                      vertical: isWide ? 24 : 16,
+                    ),
                     child: Form(
                       key: _formKey,
                       child: Column(
@@ -130,14 +134,19 @@ class _SetNewPasswordPageState extends State<SetNewPasswordPage> {
                             enabled: !_isLoading,
                             suffix: IconButton(
                               icon: Icon(
-                                _obscure1 ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                                _obscure1
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
                                 color: AppColors.neutralDarkerGrey,
                               ),
-                              onPressed: () => setState(() => _obscure1 = !_obscure1),
+                              onPressed: () =>
+                                  setState(() => _obscure1 = !_obscure1),
                             ),
                             validator: (value) {
-                              if (value == null || value.isEmpty) return 'Please enter a password';
-                              if (value.length < 8) return 'Password must be at least 8 characters';
+                              if (value == null || value.isEmpty)
+                                return 'Please enter a password';
+                              if (value.length < 8)
+                                return 'Password must be at least 8 characters';
                               return null;
                             },
                           ),
@@ -149,14 +158,19 @@ class _SetNewPasswordPageState extends State<SetNewPasswordPage> {
                             enabled: !_isLoading,
                             suffix: IconButton(
                               icon: Icon(
-                                _obscure2 ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                                _obscure2
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
                                 color: AppColors.neutralDarkerGrey,
                               ),
-                              onPressed: () => setState(() => _obscure2 = !_obscure2),
+                              onPressed: () =>
+                                  setState(() => _obscure2 = !_obscure2),
                             ),
                             validator: (value) {
-                              if (value == null || value.isEmpty) return 'Please confirm your password';
-                              if (value != _passwordController.text) return 'Passwords do not match';
+                              if (value == null || value.isEmpty)
+                                return 'Please confirm your password';
+                              if (value != _passwordController.text)
+                                return 'Passwords do not match';
                               return null;
                             },
                           ),

@@ -33,7 +33,7 @@ class EventRepositoryImpl implements EventRepository {
           .select()
           .order('date', ascending: true);
 
-      print('✅ EVENTS: Fetched ${eventsResponse.length} events');
+      print('✅ EVENTS: Fetched ${eventsResponse} events');
 
       // Get current user ID
       final userId = _supabaseClient.auth.currentUser?.id;
@@ -174,10 +174,6 @@ class EventRepositoryImpl implements EventRepository {
       );
 
       // Ensure date is properly formatted
-      if (eventData.containsKey('date')) {
-        final date = event.date;
-        eventData['date'] = date.toUtc().toIso8601String();
-      }
 
       final response = await _supabaseClient
           .from(_eventsTable)

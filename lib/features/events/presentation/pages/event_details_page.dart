@@ -5,6 +5,7 @@ import 'package:coexist_app_portal/features/events/domain/models/registered_user
 import 'package:coexist_app_portal/features/events/presentation/widgets/event_detail_info.dart';
 import 'package:coexist_app_portal/features/events/presentation/widgets/registered_users_list.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/event_bloc.dart';
 import '../bloc/event_event.dart';
@@ -80,7 +81,7 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
                 backgroundColor: AppColors.error,
               ),
             );
-            Navigator.of(context).pushNamed(AppRoutes.events);
+            context.go(AppRoutes.dashboard);
           }
         } else if (state is RegisteredUsersLoaded) {
           if (state.eventId == widget.eventId) {

@@ -1,4 +1,5 @@
 import 'package:coexist_app_portal/core/common_widgets/app_button.dart';
+import 'package:coexist_app_portal/core/theme/app_colors.dart';
 import 'package:coexist_app_portal/core/theme/app_text_styles.dart';
 import 'package:coexist_app_portal/core/utils/app_router.dart';
 import 'package:coexist_app_portal/core/utils/date_formatter.dart';
@@ -9,6 +10,7 @@ import 'package:coexist_app_portal/features/events/presentation/widgets/event_im
 import 'package:coexist_app_portal/features/events/presentation/widgets/event_info_row.dart';
 import 'package:coexist_app_portal/features/events/presentation/widgets/event_utils.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class EventDetailsInfo extends StatelessWidget {
@@ -17,6 +19,7 @@ class EventDetailsInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('fetch event date: ${event?.date}');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -129,13 +132,47 @@ class EventDetailsInfo extends StatelessWidget {
                   child: AppButton(
                     text: 'Edit Event',
                     onPressed: () {
-                      Navigator.of(
-                        context,
-                      ).pushNamed(AppRoutes.editEvent, arguments: event!.id);
+                      context.go(AppRoutes.editEvent(event!.id));
                     },
                     type: ButtonType.primary,
                     size: ButtonSize.small,
                     icon: Icons.edit_outlined,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: SizedBox(
+                  width: 350,
+                  height: 40,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      context.go(AppRoutes.dashboard);
+                      context.read<EventBloc>().add(
+                        DeleteEventEvent(eventId: event!.id),
+                      );
+                    },
+                    icon: const Icon(
+                      Icons.delete_forever_outlined,
+                      color: AppColors.error,
+                    ),
+                    label: const Text(
+                      'Delete event',
+                      style: TextStyle(color: AppColors.error),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(
+                        color: AppColors.error,
+                        width: 1.5,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
                   ),
                 ),
               ),

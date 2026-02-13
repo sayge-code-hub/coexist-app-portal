@@ -6,17 +6,19 @@ import 'package:coexist_app_portal/features/app_configs/presentation/bloc/app_co
 import 'package:coexist_app_portal/features/app_configs/presentation/bloc/app_config_events.dart';
 import 'package:coexist_app_portal/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:coexist_app_portal/features/auth/presentation/bloc/auth_event.dart';
-import 'package:coexist_app_portal/features/auth/presentation/pages/login_page.dart';
 import 'package:coexist_app_portal/features/events/presentation/bloc/event_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  usePathUrlStrategy();
 
   // Set preferred orientations
   await SystemChrome.setPreferredOrientations([
@@ -38,8 +40,7 @@ void main() async {
   Supabase.instance.client.auth.onAuthStateChange.listen((data) {
     final event = data.event;
     if (event == AuthChangeEvent.passwordRecovery) {
-      // Navigate to Set New Password screen when app is opened via reset link
-      navigatorKey.currentState?.pushNamed(AppRoutes.setNewPassword);
+      appRouter.go('/set-new-password');
     }
   });
 
@@ -67,13 +68,11 @@ class EcoFootprintPortal extends StatelessWidget {
         onTap: () {
           FocusManager.instance.primaryFocus?.unfocus();
         },
-        child: MaterialApp(
+        child: MaterialApp.router(
           title: AppConstants.appName,
           theme: AppTheme.lightTheme,
           debugShowCheckedModeBanner: false,
-          navigatorKey: navigatorKey,
-          routes: AppRoutes.routes,
-          home: LoginPage(),
+          routerConfig: appRouter,
         ),
       ),
     );

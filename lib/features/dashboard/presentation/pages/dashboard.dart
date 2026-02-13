@@ -1,21 +1,18 @@
 import 'package:coexist_app_portal/core/utils/app_router.dart';
+import 'package:coexist_app_portal/di/injection_container.dart' as di;
+import 'package:coexist_app_portal/features/auth/domain/repositories/auth_repository.dart';
 import 'package:coexist_app_portal/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:coexist_app_portal/features/auth/presentation/bloc/auth_event.dart';
-import 'package:coexist_app_portal/features/dashboard/presentation/widgets/events_section.dart';
+import 'package:coexist_app_portal/features/auth/presentation/bloc/auth_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
-
-import '../../../../di/injection_container.dart' as di;
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../auth/domain/repositories/auth_repository.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/constants/app_constants.dart';
-import '../widgets/dashboard_section.dart';
+import 'package:go_router/go_router.dart';
 
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key});
+  final Widget child;
+  const DashboardPage({super.key, required this.child});
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -24,9 +21,6 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   String? _displayName;
   bool _loading = true;
-  String _selectedMenu = 'Dashboard';
-  Map<String, int> _stats = {};
-  bool _statsLoading = true;
 
   @override
   void initState() {
@@ -52,140 +46,93 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  Future<void> _loadStats() async {
-    setState(() {
-      _statsLoading = true;
-    });
+  String _currentMenu(BuildContext context) {
+    final location = GoRouterState.of(context).uri.toString();
+    if (location.startsWith(AppRoutes.dashboardEvents)) return 'Events';
+    return 'Dashboard';
+  }
 
-    try {
-      // Use service role client for dashboard stats to bypass RLS
-      final serviceRoleClient = SupabaseClient(
-        AppConstants.baseUrl,
-        AppConstants.serviceApiKey, // You'll need to add this
-      );
+  void _onMenuTap(String label, bool isInDrawer) {
+    if (label == 'Dashboard') context.go(AppRoutes.dashboard);
+    if (label == 'Events') context.go(AppRoutes.dashboardEvents);
+    if (label == 'Logout') _showLogoutDialog(context, _displayName ?? 'User');
 
-      // Run queries in parallel with service role client
-      final results = await Future.wait([
-        serviceRoleClient.from('users').select(),
-        serviceRoleClient.from('events').select(),
-        serviceRoleClient.from('communities').select(),
-        serviceRoleClient
-            .from('waste_pickups')
-            .select()
-            .eq('status', 'Completed'),
-        serviceRoleClient.from('tree_planting_orders').select('tree_count'),
-        serviceRoleClient.from('event_registrations').select(),
-      ]);
+    if (isInDrawer) Navigator.of(context).pop();
+  }
 
-      final usersList = results[0] as List? ?? [];
-      final eventsList = results[1] as List? ?? [];
-      final communitiesList = results[2] as List? ?? [];
-      final pickupsCompletedList = results[3] as List? ?? [];
-      final treeOrdersList = results[4] as List? ?? [];
-      final registrationsList = results[5] as List? ?? [];
-
-      // Sum tree_count from orders
-      int treesPlanted = 0;
-      for (final item in treeOrdersList) {
-        try {
-          final tc = item['tree_count'];
-          if (tc is int) treesPlanted += tc;
-          if (tc is String) treesPlanted += int.tryParse(tc) ?? 0;
-          if (tc is double) treesPlanted += tc.toInt();
-        } catch (_) {}
-      }
-
-      final totalEvents = eventsList.length;
-      final totalRegistrations = registrationsList.length;
-      final eventsPerVolunteer =
-          totalEvents == 0 ? 0 : (totalRegistrations / totalEvents).round();
-
-      final data = <String, int>{
-        'Total Users': usersList.length,
-        'Pickups Completed': pickupsCompletedList.length,
-        'Total Events': totalEvents,
-        'Communities': communitiesList.length,
-      };
-
-      if (!mounted) return;
-      setState(() {
-        _stats = data;
-        _statsLoading = false;
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _stats = {};
-        _statsLoading = false;
-      });
-    }
+  void _showLogoutDialog(BuildContext context, String name) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Logout'),
+          content: Text('Are you sure you want to logout, $name?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            BlocListener<AuthBloc, AuthState>(
+              listener: (context, state) {
+                if (state is Unauthenticated) {
+                  context.go(AppRoutes.login);
+                }
+              },
+              child: Builder(
+                builder: (context) {
+                  return TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      context.read<AuthBloc>().add(const LogoutEvent());
+                    },
+                    child: const Text('Logout'),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
             final isWide = constraints.maxWidth > 900;
-            if (_loading) {
-              return Padding(
-                padding: const EdgeInsets.all(28.0),
-                child: SizedBox(
-                  height: 200,
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.primaryGreen,
-                    ),
-                  ),
-                ),
-              );
-            }
 
-            // Wide layout: sidebar + content
             if (isWide) {
               return Row(
                 children: [
-                  // Sidebar
                   Container(
                     width: 260,
                     color: Colors.white,
-                    child: _buildSidebar(
-                      context,
-                      isWide: isWide,
-                      width: constraints.maxWidth,
-                    ),
+                    child: _buildSidebar(context),
                   ),
-                  // Main content
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.all(28.0),
-                      child: _buildContent(
-                        context,
-                        isWide,
-                        constraints.maxWidth,
-                      ),
+                      child: widget.child,
                     ),
                   ),
                 ],
               );
             }
 
-            // Narrow layout: drawer + content stacked
             return Scaffold(
-              backgroundColor: Colors.grey[50],
-              drawer: Drawer(
-                child: _buildSidebar(
-                  context,
-                  isWide: isWide,
-                  width: constraints.maxWidth,
-                  isInDrawer: true,
-                ),
-              ),
+              drawer: Drawer(child: _buildSidebar(context, isInDrawer: true)),
               body: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: _buildContent(context, isWide, constraints.maxWidth),
+                child: widget.child,
               ),
             );
           },
@@ -194,64 +141,38 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Load stats once dependencies are ready
-    if (_statsLoading) {
-      _loadStats();
-    }
-  }
-
-  Widget _buildSidebar(
-    BuildContext context, {
-    bool isInDrawer = false,
-    bool isWide = false,
-    double width = 0,
-  }) {
-    // compute responsive sizes for sidebar based on width
-    final t = ((width - 360) / (1200 - 360)).clamp(0.0, 1.0);
-    final sidebarSmall = 12.0 + (16.0 - 12.0) * t; // 12..16
-    final navLabelSize = 14.0 + (18.0 - 14.0) * t; // 14..18
+  Widget _buildSidebar(BuildContext context, {bool isInDrawer = false}) {
+    final selected = _currentMenu(context);
 
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Logo
-            Container(
-              // width: 40,
-              height: 35,
-              decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
-              child: Image.asset('assets/images/coexist-logo.png'),
-            ),
+            Image.asset('assets/images/coexist-logo.png', height: 35),
             const SizedBox(height: 50),
 
-            // Menu items
             _navItem(
-              icon: Icons.dashboard,
-              label: 'Dashboard',
-              onTap: () => _onMenuTap('Dashboard', isInDrawer),
-              selected: _selectedMenu == 'Dashboard',
-              fontSize: navLabelSize,
+              Icons.dashboard,
+              'Dashboard',
+              selected == 'Dashboard',
+              () => _onMenuTap('Dashboard', isInDrawer),
             ),
             _navItem(
-              icon: Icons.event,
-              label: 'Events',
-              onTap: () => _onMenuTap('Events', isInDrawer),
-              selected: _selectedMenu == 'Events',
-              fontSize: navLabelSize,
+              Icons.event,
+              'Events',
+              selected == 'Events',
+              () => _onMenuTap('Events', isInDrawer),
             ),
 
-            Spacer(),
+            const Spacer(),
 
             _navItem(
-              icon: Icons.logout,
-              label: 'Logout',
-              onTap: () => _onMenuTap('Logout', isInDrawer),
-              fontSize: navLabelSize,
+              Icons.logout,
+              'Logout',
+              false,
+              () => _onMenuTap('Logout', isInDrawer),
             ),
           ],
         ),
@@ -259,63 +180,17 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  void _onMenuTap(String label, bool isInDrawer) {
-    setState(() {
-      _selectedMenu = label;
-    });
-    if (isInDrawer) {
-      // close the drawer
-      Navigator.of(context).pop();
-    }
-  }
-
-  void _showLogoutDialog(BuildContext context, String name) {
-    showDialog(
-      context: context,
-      barrierDismissible: false, // Prevent closing by tapping outside
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Confirm Logout'),
-          content: Text('Are you sure you want to logout, $name?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-                setState(() {
-                  _selectedMenu = 'Dashboard'; // Reset to Dashboard
-                });
-              },
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-                context.read<AuthBloc>().add(const LogoutEvent());
-                Navigator.of(
-                  context,
-                ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
-              },
-              child: Text('Logout'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _navItem({
-    required IconData icon,
-    required String label,
-    String? badge,
-    bool selected = false,
-    required VoidCallback onTap,
-    double? fontSize,
-    double? badgeFontSize,
-  }) {
+  Widget _navItem(
+    IconData icon,
+    String label,
+    bool selected,
+    VoidCallback onTap,
+  ) {
     final bg = selected ? AppColors.primaryGreen : Colors.transparent;
     final textColor = selected ? Colors.white : Colors.black87;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
@@ -335,86 +210,12 @@ class _DashboardPageState extends State<DashboardPage> {
               Expanded(
                 child: Text(
                   label,
-                  style: AppTextStyles.bodyLarge.copyWith(
-                    color: textColor,
-                    fontSize: fontSize,
-                  ),
+                  style: AppTextStyles.bodyLarge.copyWith(color: textColor),
                 ),
               ),
-              if (badge != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? Colors.white24
-                        : AppColors.primaryGreen.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    badge,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.primaryGreen,
-                      fontSize: badgeFontSize,
-                    ),
-                  ),
-                ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildContent(BuildContext context, bool isWide, double width) {
-    final name = _displayName ?? 'User';
-    // responsive font sizes based on width
-    final t = ((width - 360) / (1200 - 360)).clamp(0.0, 1.0);
-    final headingSize = 22.0 + (32.0 - 22.0) * t; // 22..32
-    final subHeadingSize = 14.0 + (16.0 - 14.0) * t; // 14..16
-    // build statistics section
-
-    if (_selectedMenu == 'Events') {
-      return EventsSection(
-        isWide: isWide,
-        name: name,
-        headingSize: headingSize,
-        subHeadingSize: subHeadingSize,
-      );
-    }
-    if (_selectedMenu == 'Dashboard') {
-      return DashboardSection(
-        isWide: isWide,
-        name: name,
-        headingSize: headingSize,
-        subHeadingSize: subHeadingSize,
-        stats: _stats,
-        onMenuTap: _onMenuTap,
-      );
-    }
-    if (_selectedMenu == 'Logout') {
-      // Show logout dialog as overlay
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _showLogoutDialog(context, name);
-      });
-      // Return the previous screen (Dashboard) as background
-      return DashboardSection(
-        isWide: isWide,
-        name: name,
-        headingSize: headingSize,
-        subHeadingSize: subHeadingSize,
-        stats: _stats,
-        onMenuTap: _onMenuTap,
-      );
-    }
-    // Default: show selected menu label centered
-    return Center(
-      child: Text(
-        _selectedMenu,
-        style: AppTextStyles.h1.copyWith(color: AppColors.primaryDarkGreen),
-        textAlign: TextAlign.center,
       ),
     );
   }

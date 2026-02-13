@@ -1,6 +1,7 @@
 import 'package:coexist_app_portal/features/auth/presentation/widgets/register_page_form.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -39,15 +40,10 @@ class _RegisterPageState extends State<RegisterPage> {
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is Authenticated) {
-          Navigator.of(
-            context,
-          ).pushNamedAndRemoveUntil(AppRoutes.dashboard, (route) => false);
+          context.go(AppRoutes.dashboard);
         } else if (state is EmailVerificationRequired) {
-          Navigator.of(context).pushNamedAndRemoveUntil(
-            AppRoutes.emailVerification,
-            (route) => false,
-            arguments: state.email,
-          );
+          final email = Uri.encodeComponent(state.email);
+          context.go('${AppRoutes.emailVerification}?email=$email');
         } else if (state is AuthError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -138,11 +134,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                       TextButton(
                                         onPressed: isLoading
                                             ? null
-                                            : () => Navigator.of(context)
-                                                  .pushNamedAndRemoveUntil(
-                                                    AppRoutes.login,
-                                                    (route) => false,
-                                                  ),
+                                            : () => context.go(AppRoutes.login),
                                         child: Text(
                                           'Login Now',
                                           style: AppTextStyles.buttonLarge

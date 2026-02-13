@@ -2,6 +2,7 @@ import 'package:coexist_app_portal/core/utils/app_router.dart';
 
 import '../../../../core/network/network_info.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 // flutter_bloc not required in this file
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -190,8 +191,7 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
                 // Back to login button
                 AppButton(
                   text: 'Back to Login',
-                  onPressed: () =>
-                      Navigator.of(context).pushNamed(AppRoutes.login),
+                  onPressed: () => context.go(AppRoutes.login),
                   type: ButtonType.primary,
                   size: ButtonSize.large,
                 ),

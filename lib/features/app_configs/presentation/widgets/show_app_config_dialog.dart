@@ -1,5 +1,6 @@
 import 'package:coexist_app_portal/features/app_configs/domain/model/app_config_model.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 
 void showAppConfigDialog(
@@ -35,7 +36,7 @@ void showAppConfigDialog(
                     SystemNavigator.pop();
                   } else {
                     // Normal dismiss behavior
-                    Navigator.of(context).pop();
+                    context.pop();
                     onDismiss?.call();
                   }
                 },

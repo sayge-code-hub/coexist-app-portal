@@ -12,6 +12,7 @@ import '../bloc/auth_event.dart';
 import '../../../../core/common_widgets/app_button.dart';
 import '../../../../core/common_widgets/app_text_field.dart';
 import '../../../../core/utils/app_router.dart';
+import 'package:go_router/go_router.dart';
 
 class LoginPageForm extends StatefulWidget {
   const LoginPageForm({
@@ -69,7 +70,7 @@ class _LoginPageFormState extends State<LoginPageForm> {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          
+
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
@@ -115,9 +116,7 @@ class _LoginPageFormState extends State<LoginPageForm> {
               child: TextButton(
                 onPressed: widget.isLoading
                     ? null
-                    : () => Navigator.of(
-                        context,
-                      ).pushNamed(AppRoutes.forgotPassword),
+                    : () => context.go(AppRoutes.forgotPassword),
                 child: const Text(
                   'Forgot Password?',
                   style: TextStyle(

@@ -11,19 +11,10 @@ import 'package:coexist_app_portal/features/events/presentation/bloc/event_event
 import 'package:coexist_app_portal/features/events/presentation/bloc/event_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 class EventsSection extends StatelessWidget {
-  final bool isWide;
-  final String name; // Placeholder for admin name
-  final double headingSize;
-  final double subHeadingSize;
-  const EventsSection({
-    super.key,
-    required this.isWide,
-    required this.name,
-    required this.headingSize,
-    required this.subHeadingSize,
-  });
+  const EventsSection({super.key});
 
   IconData _getCategoryIcon(String category) {
     switch (category) {
@@ -44,9 +35,7 @@ class EventsSection extends StatelessWidget {
     return InkWell(
       onTap: () {
         // Navigate to event details page when card is tapped
-        Navigator.of(
-          context,
-        ).pushNamed(AppRoutes.eventDetails, arguments: event.id);
+        context.go(AppRoutes.eventDetails(event.id));
       },
       borderRadius: BorderRadius.circular(16),
       child: Card(
@@ -483,7 +472,7 @@ class EventsSection extends StatelessWidget {
             child: AppButton(
               text: 'Add Event',
               onPressed: () {
-                Navigator.of(context).pushNamed(AppRoutes.createEvent);
+                context.go(AppRoutes.createEvent);
               },
               type: ButtonType.secondary,
 

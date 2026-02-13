@@ -1,6 +1,7 @@
 import 'package:coexist_app_portal/core/utils/navigation_utils.dart';
 import 'package:coexist_app_portal/features/auth/data/services/account_service.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 Future<void> showDeleteAccountDialog(
   BuildContext context,
@@ -27,12 +28,11 @@ Future<void> showDeleteAccountDialog(
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
+            onPressed: () => dialogContext.pop(),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
-              final navigator = Navigator.of(dialogContext);
               final scaffoldMessenger = ScaffoldMessenger.of(dialogContext);
 
               try {
@@ -57,8 +57,8 @@ Future<void> showDeleteAccountDialog(
                 final success = await AccountService.deleteAccount(userId);
 
                 // Close loading dialog
-                if (navigator.mounted) {
-                  navigator.pop();
+                if (dialogContext.mounted) {
+                  dialogContext.pop();
                 }
 
                 if (success) {
@@ -75,13 +75,13 @@ Future<void> showDeleteAccountDialog(
                         backgroundColor: Colors.red,
                       ),
                     );
-                    navigator.pop();
+                    dialogContext.pop();
                   }
                 }
               } catch (e) {
                 // Close loading dialog if still open
-                if (navigator.mounted) {
-                  navigator.pop();
+                if (dialogContext.mounted) {
+                  dialogContext.pop();
                 }
 
                 if (dialogContext.mounted) {
@@ -91,7 +91,7 @@ Future<void> showDeleteAccountDialog(
                       backgroundColor: Colors.red,
                     ),
                   );
-                  navigator.pop();
+                  dialogContext.pop();
                 }
               }
             },
